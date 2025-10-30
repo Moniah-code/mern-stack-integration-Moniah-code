@@ -119,6 +119,10 @@ The `screenshots/` folder contains snapshots of the UI. Reference them below (th
 You can preview these directly from the repository or include them in other documentation. Example markdown to show an image:
 
 ![Home](screenshots/Home.jpg)
+![Admin](screenshots/Dashboard.jpg)
+![Login](screenshots/Login.jpg)
+![Register](screenshots/Register.jpg)
+![Post](screenshots/PostCreation.jpg)
 
 ---
 
