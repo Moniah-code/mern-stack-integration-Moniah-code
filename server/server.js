@@ -1,78 +1,106 @@
 // server.js - Main server file for the MERN blog application
-
-// Import required modules
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
+const config = require('./config/config');
+const connectDB = require('./config/db');
+const { errorHandler } = require('./utils/errorHandler');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 
 // Import routes
 const postRoutes = require('./routes/posts');
 const categoryRoutes = require('./routes/categories');
 const authRoutes = require('./routes/auth');
 
-// Load environment variables
-dotenv.config();
-
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// CORS configuration - must come before other middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3003'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: config.RATE_LIMIT_WINDOW,
+  max: config.RATE_LIMIT_MAX
+});
+app.use('/api/', limiter);
+
+// General middleware
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, config.UPLOAD_PATH)));
 
-// Log requests in development mode
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-  });
+// Logging
+if (config.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
 }
 
 // API routes
-app.use('/api/posts', postRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/auth', authRoutes);
+const apiRouter = express.Router();
+apiRouter.use('/posts', postRoutes);
+apiRouter.use('/categories', categoryRoutes);
+apiRouter.use('/auth', authRoutes);
+
+// Mount API routes
+app.use('/api/v1', apiRouter); // Using explicit path for clarity
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('MERN Blog API is running');
+  res.json({
+    name: 'MERN Blog API',
+    version: config.API_VERSION,
+    status: 'running'
+  });
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.statusCode || 500).json({
-    success: false,
-    error: err.message || 'Server Error',
-  });
-});
+app.use(errorHandler);
 
-// Connect to MongoDB and start server
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+// Start server
+const startServer = async () => {
+  try {
+    await connectDB();
+    
+    const server = app.listen(config.PORT, () => {
+      console.log(`Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
+
+    // Handle unhandled rejections
+    process.on('unhandledRejection', (err) => {
+      console.error('Unhandled Promise Rejection:', err);
+      server.close(() => process.exit(1));
+    });
+
+    // Handle SIGTERM
+    process.on('SIGTERM', () => {
+      console.info('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        console.info('Process terminated.');
+        process.exit(0);
+      });
+    });
+
+  } catch (err) {
+    console.error('Failed to start server:', err);
     process.exit(1);
-  });
+  }
+};
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  process.exit(1);
-});
-
-module.exports = app; 
+startServer(); 

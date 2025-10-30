@@ -1,0 +1,98 @@
+.toast-container {
+  position: fixed;
+  right: 1rem;
+  top: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 24rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease-in-out;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.toast-close {
+  margin-left: 0.75rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toast-close:focus {
+  outline: none;
+}
+
+/* Toast types */
+.toast-info {
+  background-color: #e1f5fe;
+  border: 1px solid #81d4fa;
+  color: #0277bd;
+}
+
+.toast-success {
+  background-color: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  color: #2e7d32;
+}
+
+.toast-error {
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+  color: #c62828;
+}
+
+.toast-warning {
+  background-color: #fff3e0;
+  border: 1px solid #ffcc80;
+  color: #ef6c00;
+}
+
+/* Close button hover styles */
+.toast-info .toast-close:hover {
+  background-color: rgba(129, 212, 250, 0.2);
+}
+
+.toast-success .toast-close:hover {
+  background-color: rgba(165, 214, 167, 0.2);
+}
+
+.toast-error .toast-close:hover {
+  background-color: rgba(239, 154, 154, 0.2);
+}
+
+.toast-warning .toast-close:hover {
+  background-color: rgba(255, 204, 128, 0.2);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
